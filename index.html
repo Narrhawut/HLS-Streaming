@@ -2,87 +2,110 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ขั้นตอนแสดงวิดีโอ HLS ด้วย HLS.js และ FFmpeg บน VS Code</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
-    /* Reset & base */
+    /* Reset & Base */
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     body {
       font-family: "Kanit", sans-serif;
-      max-width: 900px;
-      margin: 30px auto 60px;
-      padding: 0 25px 60px;
-      line-height: 1.7;
-      background: linear-gradient(135deg, #e0f0ff, #f7f9fc);
+      max-width: 1000px;
+      margin: 40px auto 80px;
+      padding: 0 30px 80px;
+      line-height: 1.8;
+      background: linear-gradient(135deg, #e0f7fa, #f3e5f5);
       color: #333;
+      overflow-x: hidden;
       user-select: none;
     }
     h1, h2 {
       font-weight: 700;
-      letter-spacing: 1px;
-      margin-bottom: 15px;
+      letter-spacing: 1.2px;
       position: relative;
+      text-transform: uppercase;
     }
     h1 {
       text-align: center;
-      color: #004a99;
-      font-size: 2.8rem;
-      margin-bottom: 40px;
-      text-shadow: 1px 1px 3px rgba(0, 74, 153, 0.3);
+      color: #1a237e;
+      font-size: 3rem;
+      margin-bottom: 50px;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+      animation: fadeInDown 1s ease-out;
     }
     h2 {
-      color: #0066cc;
-      border-bottom: 3px solid #0066cc;
-      padding-bottom: 6px;
-      margin-top: 40px;
-      transition: color 0.3s ease;
+      color: #283593;
+      font-size: 1.8rem;
+      border-bottom: 4px solid #3f51b5;
+      padding-bottom: 8px;
+      margin-top: 50px;
+      transition: all 0.3s ease;
     }
     h2:hover {
-      color: #004a99;
-      border-color: #004a99;
+      color: #1a237e;
+      border-color: #1a237e;
+      transform: translateX(10px);
     }
     p {
-      margin: 12px 0 20px;
-      font-size: 1rem;
+      margin: 15px 0 25px;
+      font-size: 1.1rem;
       color: #444;
-      line-height: 1.6;
+      line-height: 1.7;
+      transition: opacity 0.5s ease;
     }
     a {
-      color: #007acc;
+      color: #3f51b5;
       text-decoration: none;
       font-weight: 600;
+      position: relative;
       transition: color 0.3s ease;
     }
+    a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: #3f51b5;
+      transition: width 0.3s ease;
+    }
+    a:hover::after {
+      width: 100%;
+    }
     a:hover {
-      color: #004a99;
-      text-decoration: underline;
+      color: #1a237e;
     }
 
+    /* Lists */
     ul, ol {
-      margin-left: 24px;
-      margin-bottom: 20px;
+      margin-left: 30px;
+      margin-bottom: 25px;
       color: #555;
-      font-size: 1rem;
-      padding-left: 10px;
+      font-size: 1.05rem;
+      padding-left: 15px;
     }
     ul li, ol li {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       position: relative;
-      padding-left: 20px;
+      padding-left: 25px;
+      transition: transform 0.3s ease;
+    }
+    ul li:hover, ol li:hover {
+      transform: translateX(5px);
     }
     ul li::before {
-      content: "✔";
+      content: "🎯";
       position: absolute;
       left: 0;
-      color: #00aaff;
-      font-weight: bold;
-      font-size: 1.1rem;
-      top: 0;
-      line-height: 1;
-      user-select: none;
-      transform: translateY(2px);
+      color: #3f51b5;
+      font-size: 1.2rem;
+      top: 2px;
     }
     ol li {
       counter-increment: step-counter;
@@ -92,10 +115,8 @@
       position: absolute;
       left: 0;
       font-weight: 700;
-      color: #0066cc;
-      user-select: none;
-      top: 0;
-      transform: translateY(2px);
+      color: #283593;
+      top: 2px;
     }
     ol {
       counter-reset: step-counter;
@@ -103,78 +124,95 @@
 
     /* Code block styling */
     pre {
-      background: #0b1229;
-      color: #7fffd4;
-      padding: 20px 25px;
-      border-radius: 10px;
-      font-size: 15px;
-      line-height: 1.5;
+      background: #1a1a2e;
+      color: #80deea;
+      padding: 25px 30px;
+      border-radius: 15px;
+      font-size: 0.95rem;
+      line-height: 1.6;
       overflow-x: auto;
-      box-shadow: 0 5px 15px rgba(0, 122, 204, 0.2);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
       user-select: text;
-      margin: 20px 0 30px;
-      font-family: 'Fira Mono', monospace, monospace;
-      transition: transform 0.3s ease;
+      margin: 25px 0 35px;
+      font-family: 'Fira Code', monospace;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     pre:hover {
-      transform: scale(1.02);
-      box-shadow: 0 8px 25px rgba(0, 122, 204, 0.4);
+      transform: scale(1.03);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    pre::before {
+      content: "📜";
+      position: absolute;
+      top: -15px;
+      left: 20px;
+      font-size: 1.5rem;
+      color: #3f51b5;
     }
 
     /* Table styling */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
-      margin-bottom: 50px;
-      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
-      border-radius: 12px;
+      margin: 30px 0 50px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      border-radius: 15px;
       overflow: hidden;
-      background: #ffffffdd;
+      background: #ffffffee;
       user-select: none;
+      transition: transform 0.3s ease;
+    }
+    table:hover {
+      transform: scale(1.02);
     }
     th, td {
-      border: 1px solid #c3d0e8;
-      padding: 12px 15px;
+      border: 1px solid #bbdefb;
+      padding: 15px 20px;
       text-align: left;
-      font-size: 1rem;
+      font-size: 1.05rem;
     }
     th {
-      background: linear-gradient(45deg, #007acc, #005a99);
+      background: linear-gradient(45deg, #3f51b5, #5c6bc0);
       color: white;
       font-weight: 700;
+      text-transform: uppercase;
     }
     tbody tr:nth-child(odd) {
-      background: #f0f6ff;
+      background: #e3f2fd;
     }
     tbody tr:hover {
-      background: #d7eaff;
+      background: #b3e5fc;
       transition: background-color 0.3s ease;
     }
 
     /* Video styling */
     video#video {
       width: 100%;
-      max-width: 640px;
+      max-width: 720px;
       height: auto;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 102, 204, 0.3);
-      margin: 25px auto 40px;
+      border-radius: 15px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+      margin: 30px auto 50px;
       display: block;
-      transition: box-shadow 0.3s ease;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
     }
     video#video:hover {
-      box-shadow: 0 15px 40px rgba(0, 122, 255, 0.5);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+      transform: scale(1.05);
     }
 
-    /* Slider for explanation */
+    /* Slider styling */
     .slider {
-      margin-bottom: 50px;
-      border-radius: 15px;
-      background: #e6f0ff;
-      padding: 30px 35px;
-      box-shadow: 0 10px 25px rgba(0, 102, 204, 0.15);
+      margin-bottom: 60px;
+      border-radius: 20px;
+      background: #e8eaf6;
+      padding: 40px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
       user-select: none;
+      animation: slideIn 1s ease-out;
     }
     .slide {
       display: none;
@@ -184,118 +222,256 @@
       display: block;
     }
     @keyframes fadeInSlide {
-      0% {opacity: 0; transform: translateY(15px);}
-      100% {opacity: 1; transform: translateY(0);}
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateX(-50px); }
+      100% { opacity: 1; transform: translateX(0); }
     }
 
-    /* Emoji decoration in titles */
+    /* Slider navigation buttons */
+    .slider-nav {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .slider-btn {
+      background: #3f51b5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .slider-btn:hover {
+      background: #1a237e;
+      transform: scale(1.1);
+    }
+    .slider-btn:disabled {
+      background: #b0bec5;
+      cursor: not-allowed;
+    }
+
+    /* Decorative elements */
     h1::before {
-      content: "🎥 ";
+      content: "🎬 ";
+      font-size: 1.2em;
     }
     h2::before {
-      content: "🔹 ";
-      color: #007acc;
+      content: "🔥 ";
+      color: #3f51b5;
+      font-size: 1.2em;
     }
 
-    /* Button style for navigation (optional enhancement for slider) */
-    /* If you want I can help add slider navigation later */
+    /* Back to top button */
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #3f51b5;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .back-to-top:hover {
+      transform: scale(1.2);
+      background: #1a237e;
+    }
+    .back-to-top.show {
+      display: block;
+    }
 
     /* Responsive */
-    @media screen and (max-width: 700px) {
+    @media screen and (max-width: 768px) {
       body {
-        padding: 0 15px 40px;
+        padding: 0 20px 60px;
       }
       h1 {
-        font-size: 2.2rem;
+        font-size: 2.4rem;
+      }
+      h2 {
+        font-size: 1.5rem;
       }
       pre {
-        font-size: 13px;
+        font-size: 0.85rem;
       }
       video#video {
         max-width: 100%;
       }
+      .slider {
+        padding: 20px;
+      }
+      .slider-btn {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>🧾HLS: การใช้ ffmpeg สร้างไฟล์ .m3u8 และการใช้ HLS.js เพื่อดูวีดีโอที่ steam และอธิบายการทำงานของ HLS</h1>
+  <h1>HLS: การใช้ FFmpeg สร้างไฟล์ .m3u8 และ HLS.js เพื่อสตรีมวิดีโอ</h1>
 
-  <!-- สไลด์อธิบาย -->
-  <div class="slider">
+  <!-- Explanation Slider -->
+  <div class="slider" id="explanation-slider">
     <h1>📚 สไลด์อธิบาย HLS.js + FFmpeg</h1>
-
     <div class="slide active">
       <h2>1. HLS คืออะไร?</h2>
-      <p>HLS (HTTP Live Streaming) เป็นโปรโตคอลสตรีมมิ่งวิดีโอที่พัฒนาโดย Apple เพื่อให้เว็บหรือแอปสามารถเล่นวิดีโอแบบสตรีมมิ่งได้อย่างมีประสิทธิภาพ</p>
+      <p>HLS (HTTP Live Streaming) เป็นโปรโตคอลสตรีมมิ่งวิดีโอแบบ adaptive bitrate ที่พัฒนาโดย Apple</p>
       <ul>
-        <li>แบ่งวิดีโอเป็นชิ้นเล็ก ๆ (.ts)</li>
-        <li>ใช้ไฟล์ playlist (.m3u8) ควบคุมการโหลด</li>
-        <li>รองรับการปรับคุณภาพวิดีโอตามความเร็วอินเทอร์เน็ต</li>
+        <li>แบ่งวิดีโอเป็นไฟล์ย่อยขนาดเล็ก (segment) เช่น <code>.ts</code></li>
+        <li>ใช้ไฟล์ playlist <code>.m3u8</code> เพื่อควบคุมการโหลดและลำดับการเล่น</li>
+        <li>มีทั้ง <strong>Master playlist</strong> (รวมหลาย bitrate) และ <strong>Media playlist</strong> (แต่ละ bitrate)</li>
+        <li>ทำงานผ่าน HTTP/HTTPS ทำให้ใช้งานร่วมกับ CDN ได้ดี</li>
+        <li>รองรับการปรับคุณภาพวิดีโอตาม bandwidth ของผู้ใช้งานแบบเรียลไทม์</li>
       </ul>
-   
+    </div>
+    <div class="slide">
       <h2>2. FFmpeg คืออะไร?</h2>
-      <p>FFmpeg คือโปรแกรมแปลงไฟล์วิดีโอและเสียงที่สามารถแปลงไฟล์วิดีโอแบบปกติ (.mp4) ให้กลายเป็นไฟล์ HLS (.m3u8 + .ts) ที่พร้อมสำหรับการสตรีม</p>
-      <p>ใช้คำสั่ง FFmpeg เพื่อแบ่งไฟล์วิดีโอและสร้างไฟล์ playlist</p>
-   
+      <p>FFmpeg เป็นเครื่องมือ command-line สำหรับแปลงไฟล์วิดีโอ เสียง และสตรีมมิ่ง โดยสามารถใช้สร้างไฟล์ HLS ได้ง่าย ๆ</p>
+      <p>ตัวอย่างคำสั่งสร้างไฟล์ HLS จาก MP4:</p>
+      <pre>ffmpeg -i input.mp4 -codec: copy -start_number 0 -hls_time 6 -hls_list_size 0 -f hls output.m3u8</pre>
+      <ul>
+        <li><code>-hls_time 6</code>: แบ่งเป็น segment ละ 6 วินาที</li>
+        <li><code>-hls_list_size 0</code>: รวมทุก segment ใน playlist (สำหรับ VOD)</li>
+        <li><code>-start_number 0</code>: กำหนดหมายเลข segment เริ่มต้น</li>
+        <li>ผลลัพธ์จะได้ไฟล์ <code>.m3u8</code> และ <code>.ts</code> หลายไฟล์</li>
+      </ul>
+    </div>
+    <div class="slide">
       <h2>3. HLS.js คืออะไร?</h2>
-      <p>HLS.js เป็นไลบรารี JavaScript ที่ช่วยให้เบราว์เซอร์ที่ไม่รองรับ HLS โดยตรง เช่น Chrome และ Firefox สามารถเล่นวิดีโอ HLS (.m3u8) ได้</p>
-      <p>HLS.js จะโหลดและจัดการไฟล์วิดีโอแบบสตรีมมิ่ง ให้เล่นได้เหมือนบน Safari ที่รองรับ HLS อยู่แล้ว</p>
-  
+      <p>HLS.js เป็น JavaScript Library แบบ open-source ที่ช่วยให้เบราว์เซอร์ที่ไม่รองรับการเล่นไฟล์ HLS (.m3u8) โดยตรง สามารถเล่นได้ผ่าน Media Source Extensions (MSE)</p>
+      <p>การทำงานของ HLS.js จะประกอบด้วย:</p>
+      <ul>
+        <li><strong>โหลดไฟล์ Playlist (.m3u8)</strong> ผ่าน HTTP/HTTPS</li>
+        <li><strong>โหลดไฟล์ Segment (.ts)</strong> ตามที่ playlist ระบุ</li>
+        <li><strong>ถอดรหัสและ buffer ข้อมูล</strong> ผ่าน Media Source API</li>
+        <li><strong>เชื่อมต่อกับ &lt;video&gt;</strong> เพื่อให้เล่นวิดีโอได้เหมือน native HLS player</li>
+      </ul>
+      <h3>📦 ตัวอย่างโค้ด HLS.js</h3>
+      <pre>&lt;video id="video" controls&gt;&lt;/video&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/hls.js@latest"&gt;&lt;/script&gt;
+&lt;script&gt;
+  if (Hls.isSupported()) {
+    var video = document.getElementById('video');
+    var hls = new Hls();
+    hls.loadSource('output.m3u8');
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+      video.play();
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = 'output.m3u8';
+    video.addEventListener('loadedmetadata', function () {
+      video.play();
+    });
+  }
+&lt;/script&gt;</pre>
+      <h3>🔍 อธิบายโค้ด</h3>
+      <ul>
+        <li><code>Hls.isSupported()</code> → เช็กว่าเบราว์เซอร์ใช้ HLS.js ได้ไหม</li>
+        <li><code>hls.loadSource('output.m3u8')</code> → โหลด playlist ที่ชี้ไปยังไฟล์ .ts</li>
+        <li><code>hls.attachMedia(video)</code> → ผูกการเล่นเข้ากับ element <code>&lt;video&gt;</code></li>
+        <li><code>Hls.Events.MANIFEST_PARSED</code> → เหตุการณ์ที่บอกว่าโหลด playlist เสร็จแล้ว พร้อมเล่นได้</li>
+        <li>รองรับ fallback สำหรับ Safari ที่ไม่ต้องใช้ HLS.js เพราะเล่นได้โดยตรง</li>
+      </ul>
+      <h3>⭐ ข้อดีของ HLS.js</h3>
+      <ul>
+        <li>ใช้งานง่าย ไม่ต้องติดตั้ง plugin</li>
+        <li>เล่นได้บนเบราว์เซอร์สมัยใหม่เกือบทั้งหมด</li>
+        <li>รองรับ Live Streaming และ VOD</li>
+        <li>สามารถ debug, จัดการ event, หรือควบคุม bitrate ได้</li>
+      </ul>
+    </div>
+    <div class="slide">
       <h2>4. ปัญหาการเล่น HLS บนเบราว์เซอร์ทั่วไป</h2>
       <ul>
-        <li>Safari รองรับ HLS โดยตรง</li>
-        <li>Chrome, Firefox ยังไม่รองรับ HLS โดยตรง</li>
-        <li>จึงต้องใช้ HLS.js เพื่อช่วยเล่น HLS บนเบราว์เซอร์เหล่านั้น</li>
+        <li>✅ Safari รองรับ HLS โดยตรง (ผ่าน native player)</li>
+        <li>❌ Chrome และ Firefox ไม่รองรับ HLS โดยตรง → ต้องใช้ HLS.js</li>
+        <li>✅ HLS.js ช่วยให้เล่น HLS บนเบราว์เซอร์ที่ไม่รองรับได้</li>
+        <li>HLS บน Android อาจต้องทดสอบแยก เนื่องจากบาง WebView ไม่รองรับ HLS.js</li>
       </ul>
+      <h2>หมายเหตุเพิ่มเติม</h2>
+      <ul>
+        <li>HLS ใช้ TCP ทำให้ latency สูงกว่า DASH หรือ WebRTC</li>
+        <li>ถ้าเป็น Live ต้องใช้ option เช่น <code>-hls_flags delete_segments</code> เพื่อจัดการ segment เก่า</li>
+        <li>ควรใช้ Web server ที่รองรับ byte-range requests เช่น Nginx หรือ Apache</li>
+      </ul>
+    </div>
+    <div class="slider-nav">
+      <button class="slider-btn" onclick="prevSlide('explanation')">ย้อนกลับ</button>
+      <button class="slider-btn" onclick="nextSlide('explanation')">ถัดไป</button>
     </div>
   </div>
 
-  <div class="slider">
+  <!-- Steps Slider -->
+  <div class="slider" id="steps-slider">
     <h1>📚 ขั้นตอนแสดงวิดีโอ HLS ด้วย HLS.js และ FFmpeg บน VS Code</h1>
-  <h2>✅ 1. ดาวน์โหลดและติดตั้ง FFmpeg (ต้องมี Python)</h2>
-  <p>ไปที่เว็บไซต์ FFmpeg Download</p>
-  <p>แนะนำโหลดจาก: <a href="https://www.gyan.dev/ffmpeg/builds/" target="_blank" rel="noopener">https://www.gyan.dev/ffmpeg/builds/</a></p>
-  <p>แตกไฟล์ ZIP ที่โหลดมา ไปไว้ในโฟลเดอร์<br />
-    ตัวอย่างเช่น:</p>
-  <pre>C:\ffmpeg-8.0\</pre>
-  <p>ภายในจะมีไฟล์:</p>
-  <pre>C:\ffmpeg-8.0\ffmpeg-8.0-essentials_build\bin\ffmpeg.exe</pre>
-
-  <h2>✅ 2. ตั้งค่า Environment Variables</h2>
-  <ol>
-    <li>เปิด System Properties → คลิก Environment Variables</li>
-    <li>ในหัวข้อ System variables</li>
-    <li>คลิก Path → Edit → New</li>
-    <li>เพิ่ม path ต่อไปนี้:<br />
-      <pre>C:\ffmpeg-8.0\ffmpeg-8.0-essentials_build\bin</pre>
-    </li>
-    <li>กด OK จนหมด</li>
-  </ol>
-
-  <h2>✅ 3. ทดสอบว่า FFmpeg ใช้งานได้</h2>
-  <ol>
-    <li>เปิด Command Prompt (CMD)</li>
-    <li>พิมพ์คำสั่ง:<br />
-      <pre>ffmpeg -version</pre>
-    </li>
-  </ol>
-  <p>✅ ถ้าเห็นเวอร์ชัน FFmpeg แสดงขึ้นมา แสดงว่าติดตั้งเรียบร้อยแล้ว</p>
-
-  <h2>✅ 4. สร้างโปรเจกต์ใน VS Code</h2>
-  <ol>
-    <li>เปิด VS Code</li>
-    <li>ไปที่เมนู File &gt; Open Folder...</li>
-    <li>เลือกโฟลเดอร์:<br />
-      <pre>C:\ffmpeg-8.0</pre>
-    </li>
-  </ol>
-
-  <h2>✅ 5. สร้างไฟล์ <code>index.html</code></h2>
-  <ol>
-    <li>คลิกขวาใน Explorer → New File → ตั้งชื่อ: <code>index.html</code></li>
-    <li>วางโค้ด HTML ดังนี้:</li>
-  </ol>
-  <pre>
+    <div class="slide active">
+      <h2>✅ 1. ดาวน์โหลดและติดตั้ง FFmpeg (ต้องมี Python)</h2>
+      <p>ไปที่เว็บไซต์ FFmpeg Download</p>
+      <p>แนะนำโหลดจาก: <a href="https://www.gyan.dev/ffmpeg/builds/" target="_blank" rel="noopener">https://www.gyan.dev/ffmpeg/builds/</a></p>
+      <p>แตกไฟล์ ZIP ที่โหลดมา ไปไว้ในโฟลเดอร์<br />
+        ตัวอย่างเช่น:</p>
+      <pre>C:\ffmpeg-8.0\</pre>
+      <p>ภายในจะมีไฟล์:</p>
+      <pre>C:\ffmpeg-8.0\ffmpeg-8.0-essentials_build\bin\ffmpeg.exe</pre>
+    </div>
+    <div class="slide">
+      <h2>✅ 2. ตั้งค่า Environment Variables</h2>
+      <ol>
+        <li>เปิด System Properties → คลิก Environment Variables</li>
+        <li>ในหัวข้อ System variables</li>
+        <li>คลิก Path → Edit → New</li>
+        <li>เพิ่ม path ต่อไปนี้:<br />
+          <pre>C:\ffmpeg-8.0\ffmpeg-8.0-essentials_build\bin</pre>
+        </li>
+        <li>กด OK จนหมด</li>
+      </ol>
+    </div>
+    <div class="slide">
+      <h2>✅ 3. ทดสอบว่า FFmpeg ใช้งานได้</h2>
+      <ol>
+        <li>เปิด Command Prompt (CMD)</li>
+        <li>พิมพ์คำสั่ง:<br />
+          <pre>ffmpeg -version</pre>
+        </li>
+      </ol>
+      <p>✅ ถ้าเห็นเวอร์ชัน FFmpeg แสดงขึ้นมา แสดงว่าติดตั้งเรียบร้อยแล้ว</p>
+    </div>
+    <div class="slide">
+      <h2>✅ 4. สร้างโปรเจกต์ใน VS Code</h2>
+      <ol>
+        <li>เปิด VS Code</li>
+        <li>ไปที่เมนู File &gt; Open Folder...</li>
+        <li>เลือกโฟลเดอร์:<br />
+          <pre>C:\ffmpeg-8.0</pre>
+        </li>
+      </ol>
+    </div>
+    <div class="slide">
+      <h2>✅ 5. สร้างไฟล์ <code>index.html</code></h2>
+      <ol>
+        <li>คลิกขวาใน Explorer → New File → ตั้งชื่อ: <code>index.html</code></li>
+        <li>วางโค้ด HTML ดังนี้:</li>
+      </ol>
+      <pre>
 &lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
@@ -329,40 +505,41 @@
   &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-  </pre>
-
-    
-  <h2>✅ 6. แปลงวิดีโอเป็น HLS ด้วย FFmpeg</h2>
-  <ol>
-    <li>วางไฟล์วิดีโอ <code>.mp4</code> ที่คุณต้องการใช้ (เช่น <code>videoplayback.mp4</code>) ลงในโฟลเดอร์ <code>C:\ffmpeg-8.0</code></li>
-    <li>เปิด CMD แล้วรันคำสั่งนี้:</li>
-  </ol>
-  <pre>
+      </pre>
+    </div>
+    <div class="slide">
+      <h2>✅ 6. แปลงวิดีโอเป็น HLS ด้วย FFmpeg</h2>
+      <ol>
+        <li>วางไฟล์วิดีโอ <code>.mp4</code> ที่คุณต้องการใช้ (เช่น <code>videoplayback.mp4</code>) ลงในโฟลเดอร์ <code>C:\ffmpeg-8.0</code></li>
+        <li>เปิด CMD แล้วรันคำสั่งนี้:</li>
+      </ol>
+      <pre>
 cd C:\ffmpeg-8.0
-
 ffmpeg -i videoplayback.mp4 -profile:v baseline -level 3.0 -start_number 0 -hls_time 10 -hls_list_size 0 -f hls output.m3u8
-  </pre>
-  <p>📦 ไฟล์ที่ได้:</p>
-  <pre>
+      </pre>
+      <p>📦 ไฟล์ที่ได้:</p>
+      <pre>
 output.m3u8
 output0.ts, output1.ts, output2.ts, ...
-  </pre>
-
-  <h2>✅ 7. รัน Local Web Server ด้วย Python</h2>
-  <ol>
-    <li>เปิด Terminal ใน VS Code หรือ CMD</li>
-    <li>รันคำสั่ง:</li>
-  </ol>
-  <pre>
+      </pre>
+    </div>
+    <div class="slide">
+      <h2>✅ 7. รัน Local Web Server ด้วย Python</h2>
+      <ol>
+        <li>เปิด Terminal ใน VS Code หรือ CMD</li>
+        <li>รันคำสั่ง:</li>
+      </ol>
+      <pre>
 cd C:\ffmpeg-8.0
 python -m http.server 8000
-  </pre>
-  <p>เปิดเบราว์เซอร์ แล้วไปที่:<br />
-  <code>http://localhost:8000/index.html</code></p>
-  <p>🎉 วิดีโอจะเล่นผ่าน HLS ได้สำเร็จ!</p>
-
-  <h2>✅ โครงสร้างโฟลเดอร์สุดท้ายควรเป็นแบบนี้:</h2>
-  <pre>
+      </pre>
+      <p>เปิดเบราว์เซอร์ แล้วไปที่:<br />
+        <code>http://localhost:8000/index.html</code></p>
+      <p>🎉 วิดีโอจะเล่นผ่าน HLS ได้สำเร็จ!</p>
+    </div>
+    <div class="slide">
+      <h2>✅ 8. โครงสร้างโฟลเดอร์สุดท้าย</h2>
+      <pre>
 C:\ffmpeg-8.0\
 ├── index.html
 ├── videoplayback.mp4
@@ -371,30 +548,28 @@ C:\ffmpeg-8.0\
 ├── output1.ts
 ├── output2.ts
 └── ...
-  </pre>
-
-    <h2>✅ 8. ขั้นของการฝังลิ้งค์จาก Live Youtube</h2>
-     <div class="step">
-    <h2>1. คัดลอก URL YouTube ปกติ</h2>
-    <p>ตัวอย่าง URL วิดีโอ:</p>
-    <pre>https://www.youtube.com/watch?v=1gcwlczVd94</pre>
-  </div>
-
-  <div class="step">
-    <h2>2. ดึงรหัสวิดีโอ (Video ID)</h2>
-    <p>รหัสวิดีโอคือส่วนที่อยู่หลัง <code>v=</code> ใน URL ตัวอย่างนี้คือ:</p>
-    <pre>1gcwlczVd94</pre>
-  </div>
-
-  <div class="step">
-    <h2>3. สร้าง URL สำหรับฝังในเว็บ</h2>
-    <p>เปลี่ยนจาก <code>watch?v=</code> เป็น <code>embed/</code> ดังนี้:</p>
-    <pre>https://www.youtube.com/embed/1gcwlczVd94</pre>
-  </div>
-
-  <div class="step">
-    <h2>4. ตัวอย่างโค้ด iframe สำหรับฝังวิดีโอในเว็บ</h2>
-    <pre>&lt;iframe 
+      </pre>
+    </div>
+    <div class="slide">
+      <h2>✅ 9. ขั้นตอนการฝังลิ้งค์จาก Live YouTube</h2>
+      <div class="step">
+        <h3>1. คัดลอก URL YouTube ปกติ</h3>
+        <p>ตัวอย่าง URL วิดีโอ:</p>
+        <pre>https://www.youtube.com/watch?v=1gcwlczVd94</pre>
+      </div>
+      <div class="step">
+        <h3>2. ดึงรหัสวิดีโอ (Video ID)</h3>
+        <p>รหัสวิดีโอคือส่วนที่อยู่หลัง <code>v=</code> ใน URL ตัวอย่างนี้คือ:</p>
+        <pre>1gcwlczVd94</pre>
+      </div>
+      <div class="step">
+        <h3>3. สร้าง URL สำหรับฝังในเว็บ</h3>
+        <p>เปลี่ยนจาก <code>watch?v=</code> เป็น <code>embed/</code> ดังนี้:</p>
+        <pre>https://www.youtube.com/embed/1gcwlczVd94</pre>
+      </div>
+      <div class="step">
+        <h3>4. ตัวอย่างโค้ด iframe สำหรับฝังวิดีโอในเว็บ</h3>
+        <pre>&lt;iframe 
   width="560" 
   height="315" 
   src="https://www.youtube.com/embed/1gcwlczVd94" 
@@ -402,48 +577,55 @@ C:\ffmpeg-8.0\
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
   allowfullscreen&gt;
 &lt;/iframe&gt;</pre>
+      </div>
+      <div>
+        <p>ใช้ URL แบบ <code>https://www.youtube.com/embed/VideoID</code> ใน <code>src</code> ของ &lt;iframe&gt; เท่านั้น <br />
+          ห้ามใช้ URL แบบ <code>watch?v=</code> ใน &lt;iframe&gt; เพราะจะไม่แสดงผล</p>
+      </div>
+    </div>
+    <div class="slide">
+      <h2>🟩 สรุป</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ขั้นตอน</th>
+            <th>ทำเพื่ออะไร</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>โหลด FFmpeg + Python</td>
+            <td>ใช้แปลงวิดีโอ</td>
+          </tr>
+          <tr>
+            <td>ตั้ง Path</td>
+            <td>เรียก ffmpeg ได้จากทุกที่</td>
+          </tr>
+          <tr>
+            <td>สร้าง index.html</td>
+            <td>ใช้แสดงวิดีโอบนเว็บ</td>
+          </tr>
+          <tr>
+            <td>แปลง .mp4 เป็น .m3u8</td>
+            <td>เตรียมไฟล์แบบ HLS</td>
+          </tr>
+          <tr>
+            <td>รัน Local Server</td>
+            <td>เพื่อให้เบราว์เซอร์โหลด HLS ได้</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="slider-nav">
+      <button class="slider-btn" onclick="prevSlide('steps')">ย้อนกลับ</button>
+      <button class="slider-btn" onclick="nextSlide('steps')">ถัดไป</button>
+    </div>
   </div>
 
-  <div>
-    <p>
-      ใช้ URL แบบ <code>https://www.youtube.com/embed/VideoID</code> ใน <code>src</code> ของ &lt;iframe&gt; เท่านั้น <br />
-      ห้ามใช้ URL แบบ <code>watch?v=</code> ใน &lt;iframe&gt; เพราะจะไม่แสดงผล
-    </p>
-  </div>
-  <h2>🟩 สรุป</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ขั้นตอน</th>
-        <th>ทำเพื่ออะไร</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>โหลด FFmpeg + Python</td>
-        <td>ใช้แปลงวิดีโอ</td>
-      </tr>
-      <tr>
-        <td>ตั้ง Path</td>
-        <td>เรียก ffmpeg ได้จากทุกที่</td>
-      </tr>
-      <tr>
-        <td>สร้าง index.html</td>
-        <td>ใช้แสดงวิดีโอบนเว็บ</td>
-      </tr>
-      <tr>
-        <td>แปลง .mp4 เป็น .m3u8</td>
-        <td>เตรียมไฟล์แบบ HLS</td>
-      </tr>
-      <tr>
-        <td>รัน Local Server</td>
-        <td>เพื่อให้เบราว์เซอร์โหลด HLS ได้</td>
-      </tr>
-    </tbody>
-  </table>
-
-<h2>9tokyo - สายไป feat. BLVCKHEART (Official Music Video)</h2>
+  <h2>🎵 9tokyo - สายไป feat. BLVCKHEART (Official Music Video)</h2>
   <video id="video" controls></video>
+
+  <button class="back-to-top" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
@@ -465,11 +647,56 @@ C:\ffmpeg-8.0\
     } else {
       alert("เบราว์เซอร์ของคุณไม่รองรับ HLS");
     }
+
+    // Slider navigation
+    const sliders = {
+      explanation: { current: 0, slides: document.querySelectorAll('#explanation-slider .slide') },
+      steps: { current: 0, slides: document.querySelectorAll('#steps-slider .slide') }
+    };
+
+    function showSlide(sliderName, index) {
+      const slider = sliders[sliderName];
+      slider.slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      const prevBtn = document.querySelector(`#${sliderName}-slider .slider-btn:first-child`);
+      const nextBtn = document.querySelector(`#${sliderName}-slider .slider-btn:last-child`);
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === slider.slides.length - 1;
+      slider.current = index;
+    }
+
+    function nextSlide(sliderName) {
+      const slider = sliders[sliderName];
+      if (slider.current < slider.slides.length - 1) {
+        showSlide(sliderName, slider.current + 1);
+      }
+    }
+
+    function prevSlide(sliderName) {
+      const slider = sliders[sliderName];
+      if (slider.current > 0) {
+        showSlide(sliderName, slider.current - 1);
+      }
+    }
+
+    // Initialize sliders
+    showSlide('explanation', 0);
+    showSlide('steps', 0);
+
+    // Back to top button
+    const backToTopBtn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        backToTopBtn.classList.add('show');
+      } else {
+        backToTopBtn.classList.remove('show');
+      }
+    });
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   </script>
 </body>
 </html>
-
-
-
-
-

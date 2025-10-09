@@ -332,27 +332,159 @@
   <div class="slider" id="explanation-slider">
     <h1>📚 สไลด์อธิบาย HLS.js + FFmpeg</h1>
     <div class="slide active">
-      <h2>1. HLS คืออะไร?</h2>
-      <p>HLS (HTTP Live Streaming) เป็นโปรโตคอลสตรีมมิ่งวิดีโอแบบ adaptive bitrate ที่พัฒนาโดย Apple</p>
+      <h2>1. HLS คืออะไร? (รายละเอียดเชิงเทคนิค)</h2>
+      <p><strong>HLS (HTTP Live Streaming)</strong> เป็นโปรโตคอลสตรีมมิ่งวิดีโอแบบ adaptive bitrate ที่พัฒนาโดย Apple ในปี 2009 และกลายเป็นมาตรฐาน RFC 8216 ในปี 2017</p>
+      
+      <h3>🏗️ โครงสร้างของ HLS Protocol:</h3>
       <ul>
-        <li>แบ่งวิดีโอเป็นไฟล์ย่อยขนาดเล็ก (segment) เช่น <code>.ts</code></li>
-        <li>ใช้ไฟล์ playlist <code>.m3u8</code> เพื่อควบคุมการโหลดและลำดับการเล่น</li>
-        <li>มีทั้ง <strong>Master playlist</strong> (รวมหลาย bitrate) และ <strong>Media playlist</strong> (แต่ละ bitrate)</li>
-        <li>ทำงานผ่าน HTTP/HTTPS ทำให้ใช้งานร่วมกับ CDN ได้ดี</li>
-        <li>รองรับการปรับคุณภาพวิดีโอตาม bandwidth ของผู้ใช้งานแบบเรียลไทม์</li>
+        <li><strong>Master Playlist (.m3u8)</strong>: ไฟล์หลักที่ระบุ bitrate ต่างๆ ที่มีให้เลือก</li>
+        <li><strong>Media Playlist (.m3u8)</strong>: ไฟล์ที่ระบุ segment แต่ละ bitrate</li>
+        <li><strong>Media Segments (.ts)</strong>: ไฟล์วิดีโอจริงที่แบ่งเป็นชิ้นเล็กๆ</li>
+        <li><strong>Encryption Key (.key)</strong>: ไฟล์กุญแจสำหรับการเข้ารหัส (ถ้ามี)</li>
+      </ul>
+
+      <h3>📊 ตัวอย่าง Master Playlist:</h3>
+      <pre>#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=854x480
+480p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2560000,RESOLUTION=1280x720
+720p.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=5120000,RESOLUTION=1920x1080
+1080p.m3u8</pre>
+
+      <h3>📊 ตัวอย่าง Media Playlist:</h3>
+      <pre>#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:10
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:10.0,
+segment0.ts
+#EXTINF:10.0,
+segment1.ts
+#EXTINF:10.0,
+segment2.ts
+#EXT-X-ENDLIST</pre>
+
+      <h3>⚙️ กลไกการทำงาน:</h3>
+      <ul>
+        <li><strong>Adaptive Bitrate (ABR)</strong>: ปรับคุณภาพตาม bandwidth แบบเรียลไทม์</li>
+        <li><strong>HTTP-based</strong>: ใช้ HTTP/HTTPS ทำให้ผ่าน firewall ได้ง่าย</li>
+        <li><strong>Segment-based</strong>: แบ่งเป็นชิ้นเล็กๆ ทำให้เริ่มเล่นได้เร็ว</li>
+        <li><strong>Buffering Strategy</strong>: มี buffer management ที่ชาญฉลาด</li>
+        <li><strong>Error Recovery</strong>: รองรับการกู้คืนจากข้อผิดพลาด</li>
+      </ul>
+
+      <h3>🎯 ประเภทของ HLS:</h3>
+      <ul>
+        <li><strong>VOD (Video on Demand)</strong>: วิดีโอที่บันทึกไว้แล้ว</li>
+        <li><strong>Live Streaming</strong>: สตรีมมิ่งแบบสด</li>
+        <li><strong>Event Streaming</strong>: สตรีมมิ่งเหตุการณ์พิเศษ</li>
       </ul>
     </div>
     <div class="slide">
-      <h2>2. FFmpeg คืออะไร?</h2>
-      <p>FFmpeg เป็นเครื่องมือ command-line สำหรับแปลงไฟล์วิดีโอ เสียง และสตรีมมิ่ง โดยสามารถใช้สร้างไฟล์ HLS ได้ง่าย ๆ</p>
-      <p>ตัวอย่างคำสั่งสร้างไฟล์ HLS จาก MP4:</p>
-      <pre>ffmpeg -i input.mp4 -codec: copy -start_number 0 -hls_time 6 -hls_list_size 0 -f hls output.m3u8</pre>
+      <h2>2. FFmpeg คืออะไร? (รายละเอียดเชิงเทคนิค)</h2>
+      <p><strong>FFmpeg</strong> เป็นเครื่องมือ command-line แบบ open-source สำหรับแปลงไฟล์วิดีโอ เสียง และสตรีมมิ่ง ที่พัฒนาโดย Fabrice Bellard และเป็นที่นิยมมากที่สุดในโลก</p>
+      
+      <h3>🔧 ความสามารถหลักของ FFmpeg:</h3>
       <ul>
-        <li><code>-hls_time 6</code>: แบ่งเป็น segment ละ 6 วินาที</li>
-        <li><code>-hls_list_size 0</code>: รวมทุก segment ใน playlist (สำหรับ VOD)</li>
-        <li><code>-start_number 0</code>: กำหนดหมายเลข segment เริ่มต้น</li>
-        <li>ผลลัพธ์จะได้ไฟล์ <code>.m3u8</code> และ <code>.ts</code> หลายไฟล์</li>
+        <li><strong>Format Support</strong>: รองรับไฟล์วิดีโอ/เสียงมากกว่า 200 รูปแบบ</li>
+        <li><strong>Codec Support</strong>: รองรับ codec มากกว่า 100 ชนิด</li>
+        <li><strong>Streaming</strong>: สร้าง HLS, DASH, RTMP, RTSP ได้</li>
+        <li><strong>Hardware Acceleration</strong>: ใช้ GPU ในการประมวลผล</li>
+        <li><strong>Cross Platform</strong>: ทำงานได้บน Windows, macOS, Linux</li>
       </ul>
+
+      <h3>📝 คำสั่ง FFmpeg สำหรับ HLS (แบบละเอียด):</h3>
+      
+      <h4>🎬 สร้าง HLS แบบ VOD (Video on Demand):</h4>
+      <pre>ffmpeg -i input.mp4 \
+  -c:v libx264 -c:a aac \
+  -hls_time 6 \
+  -hls_list_size 0 \
+  -hls_segment_filename "segment_%03d.ts" \
+  -f hls output.m3u8</pre>
+
+      <h4>🔴 สร้าง HLS แบบ Live Streaming:</h4>
+      <pre>ffmpeg -i input.mp4 \
+  -c:v libx264 -c:a aac \
+  -hls_time 6 \
+  -hls_list_size 5 \
+  -hls_flags delete_segments \
+  -f hls output.m3u8</pre>
+
+      <h4>🎯 สร้าง HLS แบบ Multi-bitrate:</h4>
+      <pre>ffmpeg -i input.mp4 \
+  -filter_complex "[0:v]split=3[v1][v2][v3]; \
+  [v1]copy[v1out]; [v2]scale=w=1280:h=720[v2out]; [v3]scale=w=854:h=480[v3out]" \
+  -map "[v1out]" -c:v:0 libx264 -b:v:0 5M \
+  -map "[v2out]" -c:v:1 libx264 -b:v:1 3M \
+  -map "[v3out]" -c:v:2 libx264 -b:v:2 1M \
+  -map a:0 -c:a:0 aac -b:a:0 128k \
+  -map a:0 -c:a:1 aac -b:a:1 128k \
+  -map a:0 -c:a:2 aac -b:a:2 128k \
+  -var_stream_map "v:0,a:0 v:1,a:1 v:2,a:2" \
+  -master_pl_name master.m3u8 \
+  -hls_time 6 \
+  -hls_list_size 0 \
+  -hls_segment_filename "stream_%v/segment_%03d.ts" \
+  -f hls stream_%v/playlist.m3u8</pre>
+
+      <h3>⚙️ พารามิเตอร์สำคัญ:</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>พารามิเตอร์</th>
+            <th>คำอธิบาย</th>
+            <th>ตัวอย่าง</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>-hls_time</code></td>
+            <td>ความยาวของแต่ละ segment (วินาที)</td>
+            <td>6, 10, 15</td>
+          </tr>
+          <tr>
+            <td><code>-hls_list_size</code></td>
+            <td>จำนวน segment ใน playlist (0 = ทั้งหมด)</td>
+            <td>0, 5, 10</td>
+          </tr>
+          <tr>
+            <td><code>-hls_flags</code></td>
+            <td>ตัวเลือกเพิ่มเติม</td>
+            <td>delete_segments, independent_segments</td>
+          </tr>
+          <tr>
+            <td><code>-hls_segment_filename</code></td>
+            <td>รูปแบบชื่อไฟล์ segment</td>
+            <td>"segment_%03d.ts"</td>
+          </tr>
+          <tr>
+            <td><code>-c:v</code></td>
+            <td>Video codec</td>
+            <td>libx264, libx265, copy</td>
+          </tr>
+          <tr>
+            <td><code>-c:a</code></td>
+            <td>Audio codec</td>
+            <td>aac, mp3, copy</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🔐 การเข้ารหัส HLS:</h3>
+      <pre>ffmpeg -i input.mp4 \
+  -c:v libx264 -c:a aac \
+  -hls_time 6 \
+  -hls_key_info_file keyinfo.txt \
+  -hls_allow_cache 0 \
+  -f hls output.m3u8</pre>
+
+      <h3>📄 ไฟล์ keyinfo.txt:</h3>
+      <pre>https://example.com/encryption.key
+encryption.key
+0123456789abcdef0123456789abcdef</pre>
     </div>
     <div class="slide">
       <h2>3. HLS.js คืออะไร?</h2>
@@ -412,6 +544,33 @@
         <li>HLS ใช้ TCP ทำให้ latency สูงกว่า DASH หรือ WebRTC</li>
         <li>ถ้าเป็น Live ต้องใช้ option เช่น <code>-hls_flags delete_segments</code> เพื่อจัดการ segment เก่า</li>
         <li>ควรใช้ Web server ที่รองรับ byte-range requests เช่น Nginx หรือ Apache</li>
+      </ul>
+    </div>
+    <div class="slide">
+      <h2>5. ทำไมถึงเลือก HLS แทน DASH?</h2>
+      <p>HLS (HTTP Live Streaming) และ DASH (Dynamic Adaptive Streaming over HTTP) เป็นโปรโตคอลสตรีมมิ่งที่ได้รับความนิยม แต่มีข้อแตกต่างที่สำคัญ:</p>
+      <h3>ข้อดีของ HLS:</h3>
+      <ul>
+        <li><strong>รองรับโดย Safari โดยตรง</strong> ไม่ต้องใช้ JavaScript library</li>
+        <li><strong>ใช้งานง่าย</strong> มีเครื่องมือและ library มากมาย เช่น HLS.js</li>
+        <li><strong>รองรับ CDN ได้ดี</strong> เนื่องจากใช้ HTTP/HTTPS</li>
+        <li><strong>มี community support มาก</strong> มีเอกสารและตัวอย่างเยอะ</li>
+        <li><strong>เหมาะสำหรับ Live Streaming</strong> มีการจัดการ segment ที่ดี</li>
+      </ul>
+      <h3>ข้อดีของ DASH:</h3>
+      <ul>
+        <li><strong>เป็นมาตรฐานเปิด</strong> ไม่ผูกติดกับบริษัทใดบริษัทหนึ่ง</li>
+        <li><strong>รองรับ codec หลากหลาย</strong> เช่น VP9, AV1</li>
+        <li><strong>มี latency ต่ำกว่า</strong> เหมาะสำหรับ real-time streaming</li>
+        <li><strong>รองรับ DRM ได้ดี</strong> มีระบบป้องกันเนื้อหา</li>
+      </ul>
+      <h3>สรุป: ทำไมเลือก HLS?</h3>
+      <ul>
+        <li><strong>ง่ายต่อการใช้งาน</strong> โดยเฉพาะกับ HLS.js</li>
+        <li><strong>รองรับเบราว์เซอร์ได้กว้าง</strong> รวมถึง Safari</li>
+        <li><strong>มีเครื่องมือมากมาย</strong> เช่น FFmpeg, HLS.js</li>
+        <li><strong>เหมาะสำหรับ VOD และ Live Streaming</strong></li>
+        <li><strong>มี community support มาก</strong> มีเอกสารและตัวอย่างเยอะ</li>
       </ul>
     </div>
     <div class="slider-nav">
